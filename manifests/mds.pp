@@ -20,13 +20,12 @@ class kalimdor::mds (
         "mds.${mds_name}/host":         value => $host;
         "mds.${mds_name}/mds_data":     value => "/var/lib/ceph/mds/ceph-${mds_name}";
         "mds.${mds_name}/keyring":      value => "/var/lib/ceph/mds/ceph-${mds_name}/keyring";
-      }
-   ->
+      } -> 
       service { "mds.${mds_name}":
         ensure => running,
-        start => "/etc/init.d/ceph start mds.${mds_name}",
-        stop => "/etc/init.d/ceph stop mds.${mds_name}",
-        status => "/etc/init.d/ceph status mds.${mds_name}",
+        start => "systemctl start ceph-mds@${mds_name}",
+        stop => "systemctl stop ceph-mds@${mds_name}",
+        status => "systemctl status ceph-mds@${mds_name}",
      }
    }
   }
