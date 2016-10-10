@@ -1,4 +1,4 @@
-class kalimdor::osd_options (
+class kalimdor::osd::options (
   $disk_type = 'ssd'
 ) {
 
@@ -46,8 +46,14 @@ class kalimdor::osd_options (
     }
 
     # set options in ceph.conf
-    ceph_config {
-        "osd/${key}":   value => $really_val;
+    if $set_val != undef and $set_val != 'undef' and $set_val != default and $set_val != 'default' {
+        ceph_config {
+            "osd/${key}":   value => $really_val;
+        }
+    } else {
+        ceph_config {
+            "osd/${key}":   ensure => absent;
+        }
     }
   }
 }

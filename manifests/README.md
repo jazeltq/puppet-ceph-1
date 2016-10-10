@@ -23,8 +23,8 @@ hieradata
 	kalimdor::cluster::enable_mon: true
 
 	kalimdor::cluster::enable_osd: true
-	kalimdor::cluster::disk_type: "ssd"
-	kalimdor::cluster::osd_device_dict:
+	kalimdor::osd::disk_type: "ssd"
+	kalimdor::osd::osd_device_dict:
 	  "wwn-0x55cd2e404bcdf711": ""
 	  "wwn-0x55cd2e404bcdee9a": ""
 	  "wwn-0x55cd2e404bcded26": ""
