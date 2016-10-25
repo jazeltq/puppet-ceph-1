@@ -35,5 +35,6 @@
 #
 # Copyright 2016 Your name here, unless otherwise noted.
 #
-class kalimdor {
+class kalimdor (
+){
 }

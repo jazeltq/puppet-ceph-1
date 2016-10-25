@@ -1,80 +1,96 @@
-# copyright @unitedstack.com
+# Copyright 2016 (C) UnitedStack Inc.
+#
+# Author: Li Tianqing <tianqing@unitedstack.com>
+# Author: Yao Ning <yaoning@unitedstack.com>
+#
+# == Class: kalimdor
+#
+# init takes care of defining roles in ceph cluster for each node
+# it also takes care of the global configuration values
+#
 
 class kalimdor::cluster(
-  $ensure                       = present,
-  $fsid                         = '066F558C-6789-4A93-AAF1-5AF1BA01A3AD',
+  $fsid,
   $cluster                      = 'ceph',
   $authentication_type          = 'cephx',
-  $mon_initial_members          = undef,
-  $mon_hosts                    = '127.0.0.1',
+
   $public_network               = undef,
   $cluster_network              = undef,
 
   $enable_mon                   = false,
-  $host                         = $::hostname,
-  $mon_addr                     = $::ipaddress_eth0,
-
   $enable_osd                   = false,
-
-  $enable_rgw                   = false,
-  $rgw_ensure                   = 'running',
-  
   $enable_mds                   = false,
-  $mds_ensure                   = 'running',
-
+  $enable_rgw                   = false,
   $enable_client                = false,
 
-  $debug_enable                 = false,
+  $osd_disk_type                = undef,
+  $enable_default_debug         = ::kalimdor::params::enable_default_debug,
+  $enable_dangerous_operation   = ::kalimdor::params::enable_dangerous_operation,
   ){
+
+  include ::kalimdor::params
+  notify{"my params: $enable_dangerous_operation": message => ""}
+
+  $enable_ceph = $enable_mon or $enable_osd or $enable_mds or $enable_rgw or $enable_client
+  
+  if $enable_ceph {
+      $ceph_ensure = present
+  } else {
+      $ceph_ensure = absent
+  }
 
   class { 'ceph':
       fsid                   => $fsid,
-      mon_host               => $mon_hosts,
-      mon_initial_members    => $mon_initial_members,
+      ensure                 => $ceph_ensure,
       authentication_type    => $authentication_type,
       public_network         => $public_network,
       cluster_network        => $cluster_network,
   }
 
   if $enable_mon {
-
       class {'kalimdor::mon':
+          cluster                  => $cluster,
           ensure                   => present,
           authentication_type      => $authentication_type,
-          cluster                  => $cluster,
-          mon_addr                 => $mon_addr,
-          mon_key                  => $mon_key,
-          host                     => $host,
+      }
+  } else {
+      if $enable_dangerous_operation {
+          class {'kalimdor::mon':
+              cluster                  => $cluster,
+              ensure                   => absent,
+              authentication_type      => $authentication_type, 
+          }
       }
   }
 
   if $enable_client{
-
       class {"kalimdor::client":
-          cluster => $cluster
+          cluster => $cluster,
       }
-  } 
+  }
 
   if $enable_osd {
-
       class {'kalimdor::osd':
-	  ensure               => present,
-	  cluster              => $cluster,
+          cluster              => $cluster,
+          ensure               => present,
+          enable_dangerous_operation => $enable_dangerous_operation,
       }
   }
 
   if $enable_rgw  {
-
-      class { 'kalimdor::rgw':
-          rgw_ensure           => $rgw_ensure,
+     class { 'kalimdor::rgw':
+          rgw_enable           => true,
      }
   }
 
   if $enable_mds {
-  
       class { "kalimdor::mds":
           mds_activate         => $enable_mds,
-          mds_name             => $host
+          mds_name             => $host,
       }
+  }
+
+  class { "kalimdor::options::debug":
+      enable_default_debug     => $enable_default_debug,
   }
 }
